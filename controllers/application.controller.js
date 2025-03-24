@@ -21,7 +21,7 @@ export const applyJob = async (req, res) => {
             });
         }
 
-        // проверка существует ли факансия
+        // проверка существует ли вакансия
         const job = await Job.findById(jobId);
         if (!job) {
             return res.status(404).json({
@@ -38,7 +38,7 @@ export const applyJob = async (req, res) => {
         job.applications.push(newApplication._id);
         await job.save();
         return res.status(201).json({
-            message:"Вакансия успешно подана",
+            message:"Отклик на вакансию успешно подан",
             success:true
         })
     } catch (error) {
