@@ -5,44 +5,50 @@ export const applyJob = async (req, res) => {
     try {
         const userId = req.id;
         const jobId = req.params.id;
-        if (!jobId) {
-            return res.status(400).json({
-                message: "Требуется индификатор вакансии",
-                success: false
-            })
-        };
-        // проверка подал ли юзер отклик на вакансию
-        const existingApplication = await Application.findOne({ job: jobId, applicant: userId });
 
+        // Проверяем, есть ли уже отклик
+        const existingApplication = await Application.findOne({ job: jobId, applicant: userId });
         if (existingApplication) {
             return res.status(400).json({
-                message: "Вы уже откликались на эту вакансию",
+                message: "Вы уже откликнулись на эту вакансию",
                 success: false
             });
         }
 
-        // проверка существует ли вакансия
+        // Проверяем, существует ли вакансия
         const job = await Job.findById(jobId);
         if (!job) {
             return res.status(404).json({
                 message: "Вакансия не найдена",
                 success: false
-            })
+            });
         }
-        // 
+
+        // Создаем новый отклик
         const newApplication = await Application.create({
-            job:jobId,
-            applicant:userId,
+            job: jobId,
+            applicant: userId
         });
 
+        // Добавляем отклик в массив вакансии
         job.applications.push(newApplication._id);
         await job.save();
+
+        // Получаем обновлённую вакансию с populate(), чтобы вернуть полные данные
+        const updatedJob = await Job.findById(jobId).populate("applications");
+
         return res.status(201).json({
-            message:"Отклик на вакансию успешно подан",
-            success:true
-        })
+            message: "Отклик успешно подан",
+            success: true,
+            job: updatedJob // отправляем клиенту обновлённую вакансию
+        });
+
     } catch (error) {
-        console.log(error);
+        console.error(error);
+        return res.status(500).json({
+            message: "Ошибка сервера",
+            success: false
+        });
     }
 };
 export const getAppliedJobs = async (req,res) => {

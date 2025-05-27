@@ -1,4 +1,6 @@
 import { Company } from "../models/company.model.js";
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const registerCompany = async (req, res) => {
     try {
@@ -42,7 +44,7 @@ export const getCompany = async (req, res) => {
         }
         return res.status(200).json({
             companies,
-            success:true
+            success: true
         })
     } catch (error) {
 
@@ -70,25 +72,39 @@ export const getCompanyById = async (req, res) => {
 export const updateCompany = async (req, res) => {
     try {
         const { name, description, website, location } = req.body;
-        const file = req.filel
-        //облачное
 
-        const updateData = { name, description, website, location };
+        // Проверяем, есть ли загруженный файл
+        let logo = req.body.logo; // оставляем текущий логотип по умолчанию
+        if (req.file) {
+            const file = getDataUri(req.file); // безопасно вызываем
+            const cloudResponse = await cloudinary.uploader.upload(file.content);
+            logo = cloudResponse.secure_url;
+        }
 
-        const company = await Company.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        const company = await Company.findByIdAndUpdate(
+            req.params.id,
+            { name, description, website, location, logo },
+            { new: true }
+        );
 
-        if(!company){
+        if (!company) {
             return res.status(404).json({
-                message:"Компания не найдена",
-                success:true
-            })
+                message: "Компания не найдена",
+                success: false
+            });
         }
 
         return res.status(200).json({
-            message:"Информация компании обновлена",
-            success:true
-        })
+            message: "Информация компании обновлена",
+            success: true,
+            company
+        });
+
     } catch (error) {
-        console.log(error);
+        console.error("Ошибка при обновлении компании:", error);
+        return res.status(500).json({
+            message: "Ошибка сервера",
+            success: false
+        });
     }
-}
+};
