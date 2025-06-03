@@ -108,3 +108,30 @@ export const updateCompany = async (req, res) => {
         });
     }
 };
+ export const deleteCompany = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const company = await Company.findByIdAndDelete(id);
+
+        if (!company) {
+            return res.status(404).json({
+                success: false,
+                message: "Компания не найдена"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Компания успешно удалена"
+        });
+
+    } catch (error) {
+        console.error("Ошибка при удалении компании:", error);
+        res.status(500).json({
+            success: false,
+            message: "Не удалось удалить компанию",
+            error: error.message
+        });
+    }
+};

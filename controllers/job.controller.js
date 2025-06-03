@@ -173,3 +173,36 @@ export const getSavedJobs = async (req, res) => {
         });
     }
 };
+export const deleteJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const job = await Job.findByIdAndDelete(id);
+
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Вакансия не найдена"
+            });
+        }
+
+        
+        await User.updateMany(
+            { savedJobs: id },
+            { $pull: { savedJobs: id } }
+        );
+
+        return res.json({
+            success: true,
+            message: "Вакансия и все отклики на неё успешно удалены"
+        });
+
+    } catch (error) {
+        console.error("Ошибка при удалении вакансии:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Не удалось удалить вакансию",
+            error: error.message
+        });
+    }
+};
