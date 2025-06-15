@@ -206,3 +206,34 @@ export const deleteJob = async (req, res) => {
         });
     }
 };
+export const unsaveJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.id;
+
+        const user = await User.findById(userId);
+
+        if (!user.savedJobs.includes(jobId)) {
+            return res.status(400).json({
+                message: "Вакансия не была сохранена",
+                success: false,
+            });
+        }
+
+        
+        user.savedJobs = user.savedJobs.filter(id => id.toString() !== jobId);
+        await user.save();
+
+        return res.status(200).json({
+            message: "Вакансия удалена из сохранённых",
+            success: true,
+        });
+
+    } catch (error) {
+        console.error("Ошибка при удалении вакансии из сохранённых:", error);
+        return res.status(500).json({
+            message: "Ошибка сервера",
+            success: false,
+        });
+    }
+};
