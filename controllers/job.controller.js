@@ -1,16 +1,16 @@
 import { Job } from "../models/job.model.js";
 import { User } from "../models/user.model.js";
 
-//админка
-export const postJob = async (req, res) =>{
+//работодатель
+export const postJob = async (req, res) => {
     try {
-        const {title, description, requirements, salary, location, jobType, experience, position, companyId} = req.body;
+        const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body;
         const userId = req.id;
 
-        if(!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId){
+        if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
             return res.status(400).json({
-                message:"Что-то пропущено",
-                success:false
+                message: "Что-то пропущено",
+                success: false
             })
         };
         const job = await Job.create({
@@ -26,36 +26,36 @@ export const postJob = async (req, res) =>{
             created_by: userId
         });
         return res.status(201).json({
-            message:"Новая вакансия успешно создана",
+            message: "Новая вакансия успешно создана",
             job,
-            success:true
+            success: true
         })
     } catch (error) {
         console.log(error);
     }
 }
 //соиск
-export const getAllJobs = async (req,res) =>{
+export const getAllJobs = async (req, res) => {
     try {
         const keyword = req.query.keyword || "";
         const query = {
-            $or:[
-                {title:{$regex:keyword, $options:"i"}},
-                {description:{$regex:keyword, $options:"i"}},
+            $or: [
+                { title: { $regex: keyword, $options: "i" } },
+                { description: { $regex: keyword, $options: "i" } },
             ]
         };
         const jobs = await Job.find(query).populate({
             path: "company"
         }).sort({ createdAt: -1 });
-        if(!jobs){
+        if (!jobs) {
             return res.status(404).json({
-                message:"Вакансии не найдены",
-                success:false
+                message: "Вакансии не найдены",
+                success: false
             })
         }
         return res.status(200).json({
             jobs,
-            success:true
+            success: true
         })
     } catch (error) {
         console.log(error);
@@ -83,23 +83,23 @@ export const getJobById = async (req, res) => {
         return res.status(500).json({ message: "Ошибка сервера", success: false });
     }
 };
-//админка
-export const getAdminJobs = async (req,res) =>{
+//работодатель
+export const getAdminJobs = async (req, res) => {
     try {
         const adminId = req.id;
-        const jobs = await Job.find({created_by:adminId}).populate({
-            path:'company',
-            createdAt:-1
+        const jobs = await Job.find({ created_by: adminId }).populate({
+            path: 'company',
+            createdAt: -1
         });
-        if(!jobs){
+        if (!jobs) {
             return res.status(404).json({
-                message:"Вакансии не найдены",
-                success:false
+                message: "Вакансии не найдены",
+                success: false
             })
         };
         return res.status(200).json({
             jobs,
-            success:true
+            success: true
         })
     } catch (error) {
         console.log(error);
@@ -119,7 +119,7 @@ export const saveJob = async (req, res) => {
             });
         }
 
-        // Проверяем, есть ли уже эта вакансия в списке сохранённых
+        // есть ли уже эта вакансия в списке сохранённых
         if (user.savedJobs.includes(jobId)) {
             return res.status(400).json({
                 message: "Вакансия уже сохранена",
@@ -127,7 +127,7 @@ export const saveJob = async (req, res) => {
             });
         }
 
-        // Добавляем вакансию в список savedJobs
+        // добавляем вакансию в список savedJobs
         user.savedJobs.push(jobId);
         await user.save();
 
@@ -177,9 +177,9 @@ export const deleteJob = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const job = await Job.findByIdAndDelete(id);
+        const deletedJob = await Job.findByIdAndDelete(id);
 
-        if (!job) {
+        if (!deletedJob) {
             return res.status(404).json({
                 success: false,
                 message: "Вакансия не найдена"
@@ -194,7 +194,7 @@ export const deleteJob = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Вакансия и все отклики на неё успешно удалены"
+            message: "Вакансия успешно удалена",
         });
 
     } catch (error) {
@@ -220,7 +220,7 @@ export const unsaveJob = async (req, res) => {
             });
         }
 
-        
+
         user.savedJobs = user.savedJobs.filter(id => id.toString() !== jobId);
         await user.save();
 
@@ -234,6 +234,36 @@ export const unsaveJob = async (req, res) => {
         return res.status(500).json({
             message: "Ошибка сервера",
             success: false,
+        });
+    }
+};
+export const updateJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const updatedData = req.body;
+
+        const updatedJob = await Job.findByIdAndUpdate(jobId, updatedData, {
+            new: true,
+            runValidators: true,
+        });
+
+        if (!updatedJob) {
+            return res.status(404).json({
+                success: false,
+                message: "Вакансия не найдена",
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Вакансия успешно обновлена",
+            updatedJob,
+        });
+    } catch (error) {
+        console.error("Ошибка при обновлении вакансии:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Не удалось обновить вакансию",
         });
     }
 };

@@ -6,7 +6,7 @@ export const applyJob = async (req, res) => {
         const userId = req.id;
         const jobId = req.params.id;
 
-        // Проверяем, есть ли уже отклик
+        // есть ли уже отклик
         const existingApplication = await Application.findOne({ job: jobId, applicant: userId });
         if (existingApplication) {
             return res.status(400).json({
@@ -15,7 +15,7 @@ export const applyJob = async (req, res) => {
             });
         }
 
-        // Проверяем, существует ли вакансия
+        // существует ли вакансия
         const job = await Job.findById(jobId);
         if (!job) {
             return res.status(404).json({
@@ -24,17 +24,17 @@ export const applyJob = async (req, res) => {
             });
         }
 
-        // Создаем новый отклик
+        
         const newApplication = await Application.create({
             job: jobId,
             applicant: userId
         });
 
-        // Добавляем отклик в массив вакансии
+        // добавление отклика в массив вакансии
         job.applications.push(newApplication._id);
         await job.save();
 
-        // Получаем обновлённую вакансию с populate(), чтобы вернуть полные данные
+        
         const updatedJob = await Job.findById(jobId).populate("applications");
 
         return res.status(201).json({
